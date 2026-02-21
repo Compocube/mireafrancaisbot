@@ -13,3 +13,4 @@
 ## Публикация проекта
 
 Проект опубликован с использованием сервиса GitHub Pages и доступен по ссылке:
+https://compocube.github.io/mireafrancaisbot/
