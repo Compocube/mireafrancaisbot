@@ -37,13 +37,14 @@ body {
     color: white;
     border: none;
     border-radius: 30px;
-    padding: 8px 16px;
-    font-size: 14px;
+    padding: 6px 14px;
+    font-size: 13px;
     font-weight: 600;
     cursor: pointer;
     transition: transform 0.2s, box-shadow 0.2s;
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-    min-height: 36px;
+    min-height: 32px;
+    white-space: nowrap;
 }
 
 .help-btn:hover {
@@ -53,6 +54,58 @@ body {
 
 .help-btn:active {
     transform: translateY(0);
+}
+
+/* Добавляем отступ сверху для заголовка, чтобы он не перекрывался кнопкой */
+.header {
+    text-align: center;
+    margin-bottom: 25px;
+    padding-top: 10px;
+    padding-right: 80px;
+}
+
+/* Для мобильных устройств делаем отступ больше */
+@media (max-width: 480px) {
+    .header {
+        padding-top: 15px;
+        padding-right: 90px;
+    }
+    
+    .header h1 {
+        font-size: 20px;
+    }
+    
+    .header p {
+        font-size: 12px;
+    }
+    
+    .help-btn {
+        padding: 5px 12px;
+        font-size: 12px;
+    }
+}
+
+/* Для очень маленьких экранов */
+@media (max-width: 380px) {
+    .header {
+        padding-right: 80px;
+    }
+    
+    .header h1 {
+        font-size: 18px;
+    }
+}
+
+.header h1 {
+    color: #333;
+    margin-bottom: 8px;
+    font-size: 24px;
+}
+
+.header p {
+    color: #666;
+    font-size: 14px;
+    margin: 0;
 }
 
 /* Окно справки */
@@ -137,23 +190,6 @@ body {
     background: #f8d7da;
     color: #721c24;
     border-left: 4px solid #dc3545;
-}
-
-.header {
-    text-align: center;
-    margin-bottom: 25px;
-}
-
-.header h1 {
-    color: #333;
-    margin-bottom: 8px;
-    font-size: 24px;
-}
-
-.header p {
-    color: #666;
-    font-size: 14px;
-    margin: 0;
 }
 
 .btn {
