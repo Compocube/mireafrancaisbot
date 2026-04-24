@@ -28,17 +28,17 @@ body {
     margin-bottom: 25px;
 }
 
-    .header h1 {
-        color: #333;
-        margin-bottom: 8px;
-        font-size: 24px;
-    }
+.header h1 {
+    color: #333;
+    margin-bottom: 8px;
+    font-size: 24px;
+}
 
-    .header p {
-        color: #666;
-        font-size: 14px;
-        margin: 0;
-    }
+.header p {
+    color: #666;
+    font-size: 14px;
+    margin: 0;
+}
 
 .btn {
     display: block;
@@ -58,14 +58,14 @@ body {
     -webkit-tap-highlight-color: transparent;
 }
 
-    .btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 20px rgba(0,123,255,0.3);
-    }
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0,123,255,0.3);
+}
 
-    .btn:active {
-        transform: translateY(0);
-    }
+.btn:active {
+    transform: translateY(0);
+}
 
 .btn-disabled {
     background: linear-gradient(135deg, #6c757d, #495057);
@@ -74,20 +74,20 @@ body {
     opacity: 0.7;
 }
 
-    .btn-disabled:hover,
-    .btn-disabled:active {
-        transform: none;
-        box-shadow: none;
-        cursor: not-allowed;
-    }
+.btn-disabled:hover,
+.btn-disabled:active {
+    transform: none;
+    box-shadow: none;
+    cursor: not-allowed;
+}
 
 .btn-textbook {
     background: linear-gradient(135deg, #28a745, #218838);
 }
 
-    .btn-textbook:hover {
-        box-shadow: 0 10px 20px rgba(40,167,69,0.3);
-    }
+.btn-textbook:hover {
+    box-shadow: 0 10px 20px rgba(40,167,69,0.3);
+}
 
 .btn-back {
     background: linear-gradient(135deg, #6c757d, #545b62);
@@ -97,9 +97,9 @@ body {
     background: linear-gradient(135deg, #dc3545, #c82333);
 }
 
-    .btn-remove:hover {
-        box-shadow: 0 10px 20px rgba(220,53,69,0.3);
-    }
+.btn-remove:hover {
+    box-shadow: 0 10px 20px rgba(220,53,69,0.3);
+}
 
 .exercise-container {
     background: #f8f9fa;
@@ -116,19 +116,19 @@ body {
     -webkit-overflow-scrolling: touch;
 }
 
-    .exercise-container p {
-        margin: 0 0 12px 0;
-        text-align: left;
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-        hyphens: auto;
-    }
+.exercise-container p {
+    margin: 0 0 12px 0;
+    text-align: left;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+}
 
-    .exercise-container br {
-        margin-bottom: 8px;
-        display: block;
-        content: "";
-    }
+.exercise-container br {
+    margin-bottom: 8px;
+    display: block;
+    content: "";
+}
 
 .word-btn {
     margin: 6px;
@@ -145,14 +145,14 @@ body {
     -webkit-tap-highlight-color: transparent;
 }
 
-    .word-btn:hover {
-        transform: scale(1.05);
-        box-shadow: 0 5px 15px rgba(40,167,69,0.3);
-    }
+.word-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(40,167,69,0.3);
+}
 
-    .word-btn:active {
-        transform: scale(0.98);
-    }
+.word-btn:active {
+    transform: scale(0.98);
+}
 
 .word-btn-unlocked {
     background: linear-gradient(135deg, #17a2b8, #138496);
@@ -241,13 +241,13 @@ body {
     -webkit-tap-highlight-color: transparent;
 }
 
-    .input-btn:hover {
-        background: linear-gradient(135deg, #e0a800, #d39e00);
-    }
+.input-btn:hover {
+    background: linear-gradient(135deg, #e0a800, #d39e00);
+}
 
-    .input-btn:active {
-        transform: scale(0.98);
-    }
+.input-btn:active {
+    transform: scale(0.98);
+}
 
 .unlocked-words {
     margin: 15px 0;
@@ -258,10 +258,10 @@ body {
     word-wrap: break-word;
 }
 
-    .unlocked-words h4 {
-        margin: 0 0 10px 0;
-        font-size: 16px;
-    }
+.unlocked-words h4 {
+    margin: 0 0 10px 0;
+    font-size: 16px;
+}
 
 .counter {
     font-size: 14px;
@@ -342,15 +342,8 @@ body {
 }
 
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .timeout-message {
@@ -376,10 +369,10 @@ body {
     padding: 0;
 }
 
-    #module-buttons .btn,
-    #exercise-buttons .btn {
-        margin: 0 !important;
-    }
+#module-buttons .btn,
+#exercise-buttons .btn {
+    margin: 0 !important;
+}
 
 .exercise-container a {
     color: #007bff;
@@ -388,14 +381,14 @@ body {
     transition: color 0.2s;
 }
 
-    .exercise-container a:hover {
-        color: #0056b3;
-        text-decoration: none;
-    }
+.exercise-container a:hover {
+    color: #0056b3;
+    text-decoration: none;
+}
 
-    .exercise-container a:visited {
-        color: #6610f2;
-    }
+.exercise-container a:visited {
+    color: #6610f2;
+}
 
 .exercise-container a {
     display: inline-block;
@@ -408,15 +401,15 @@ body {
     margin: 15px 0;
 }
 
-    .navigation-buttons .btn {
-        margin: 0;
-        flex: 1;
-    }
+.navigation-buttons .btn {
+    margin: 0;
+    flex: 1;
+}
 
 .btn-nav {
     background: linear-gradient(135deg, #8b0abe, #8e44ad);
 }
 
-    .btn-nav:hover {
-        box-shadow: 0 10px 20px rgba(155,89,182,0.3);
-    }
+.btn-nav:hover {
+    box-shadow: 0 10px 20px rgba(155,89,182,0.3);
+}
