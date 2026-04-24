@@ -892,7 +892,6 @@ const app = {
                 if (response.ok) {
                     const content = await response.text();
                     helpContent.className = 'help-content';
-                    // Сохраняем форматирование с пробелами и переносами строк
                     helpContent.innerHTML = this.formatHelpText(content);
                     contentLoaded = true;
                     console.log('Справка успешно загружена из:', url);
@@ -917,9 +916,7 @@ const app = {
     
     // Форматирование текста справки
     formatHelpText(text) {
-        // Заменяем переносы строк на <br> для отображения
         let formatted = text.replace(/\n/g, '<br>');
-        // Делаем ссылки кликабельными
         formatted = this.makeLinksClickable(formatted);
         return formatted;
     },
@@ -929,7 +926,6 @@ const app = {
         const helpWindow = document.getElementById('help-window');
         helpWindow.style.display = 'none';
         
-        // Восстанавливаем предыдущий экран
         if (this.previousScreenInfo) {
             if (this.previousScreenInfo.mainMenuVisible) {
                 document.getElementById('main-menu').style.display = 'block';
@@ -945,11 +941,9 @@ const app = {
             }
             this.previousScreenInfo = null;
         } else {
-            // Если по какой-то причине нет сохраненной информации, показываем главное меню
             document.getElementById('main-menu').style.display = 'block';
         }
         
-        // Очищаем содержимое справки для следующего открытия
         document.getElementById('help-content').innerHTML = '';
     }
 };
