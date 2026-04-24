@@ -9,6 +9,11 @@
 </head>
 <body>
     <div class="container">
+        <!-- Кнопка справки справа сверху -->
+        <div class="help-button-container">
+            <button class="help-btn" onclick="app.openHelp()">❓ Справка</button>
+        </div>
+
         <div id="main-menu">
             <div class="header">
                 <h1>🇫🇷 MIREA Français</h1>
@@ -69,6 +74,15 @@
                 <button class="btn btn-nav" id="next-exercise-btn" onclick="app.navigateToNextExercise()">Следующее ▶</button>
             </div>
             <button class="btn btn-back" onclick="app.backToExercises()">← Назад к упражнениям</button>
+        </div>
+
+        <!-- Окно справки -->
+        <div id="help-window" style="display: none;">
+            <div class="help-header">
+                <button class="help-back-btn" onclick="app.closeHelp()">← Назад</button>
+                <h3>Справка</h3>
+            </div>
+            <div id="help-content" class="help-content loading">Загрузка справки...</div>
         </div>
     </div>
 
