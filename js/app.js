@@ -100,8 +100,8 @@ const app = {
             return this.splitExercises[`${semester}.${module}.${this.currentExercise}`].parts;
         }
         const counts = {
-            'Sem3': { 1: 10, 2: 9, 3: 8, 4: 6, 5: 8, 6: 9, 7: 7 },
-            'Sem4': { 1: 10, 2: 8, 3: 8, 4: 5, 5: 7, 6: 5, 7: 5 }
+            'Sem3': {1:10, 2:9, 3:8, 4:6, 5:8, 6:9, 7:7},
+            'Sem4': {1:10, 2:8, 3:8, 4:5, 5:7, 6:5, 7:5}
         };
         return counts[semester][module] || 5;
     },
@@ -213,7 +213,7 @@ const app = {
         const prevBtn = document.getElementById('prev-exercise-btn');
         const nextBtn = document.getElementById('next-exercise-btn');
         const prevPos = this.getPrevExercisePosition();
-
+        
         if (prevPos === null || (this.currentModule === 1 && this.currentExercise === 1 && (this.currentPart === null || this.currentPart === 1))) {
             prevBtn.classList.add('btn-disabled');
             prevBtn.classList.remove('btn-nav');
@@ -345,7 +345,7 @@ const app = {
 
     makeLinksClickable(text) {
         const urlRegex = /(https?:\/\/[^\s]+)/g;
-        return text.replace(urlRegex, function (url) {
+        return text.replace(urlRegex, function(url) {
             return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #007bff; text-decoration: underline; word-break: break-all;">${url}</a>`;
         });
     },
@@ -637,7 +637,7 @@ const app = {
         const exerciseKey = `${this.currentSemester}.${this.currentModule}.${this.currentExercise}`;
         let buttons = [];
 
-        switch (exerciseKey) {
+        switch(exerciseKey) {
             case 'Sem3.1.5':
             case 'Sem3.3.5':
             case 'Sem3.4.4':
