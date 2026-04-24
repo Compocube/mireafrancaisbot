@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>MIREA Français - Обучение</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div id="main-menu">
+            <div class="header">
+                <h1>🇫🇷 MIREA Français</h1>
+                <p>Платформа для изучения французского языка</p>
+            </div>
+            <button class="btn" onclick="app.showSemester('Sem3')">📚 Семестр 3</button>
+            <button class="btn" onclick="app.showSemester('Sem4')">📚 Семестр 4</button>
+            <button class="btn btn-textbook" onclick="app.downloadTextbook('Sem3')">📖 Учебник 3 семестра</button>
+            <button class="btn btn-textbook" onclick="app.downloadTextbook('Sem4')">📖 Учебник 4 семестра</button>
+        </div>
+
+        <div id="module-menu" style="display: none;">
+            <div class="header">
+                <h2 id="semester-title"></h2>
+                <p>Выберите модуль для изучения</p>
+            </div>
+            <div id="module-buttons"></div>
+            <button class="btn btn-back" onclick="app.backToMain()">← Назад к семестрам</button>
+        </div>
+
+        <div id="exercise-menu" style="display: none;">
+            <div class="header">
+                <h3 id="module-title"></h3>
+                <p>Выберите упражнение</p>
+            </div>
+            <div id="exercise-buttons"></div>
+            <button class="btn btn-back" onclick="app.backToModules()">← Назад к модулям</button>
+        </div>
+
+        <div id="exercise-content" style="display: none;">
+            <div class="header">
+                <h4 id="exercise-title"></h4>
+                <div id="part-indicator" style="font-size: 14px; color: #666; margin-top: 5px;"></div>
+            </div>
+            <div id="exercise-description" class="loading">Загрузка упражнения...</div>
+            <div id="input-section" style="display: none;" class="input-section">
+                <div class="input-wrapper">
+                    <input type="text" id="word-input" class="word-input" placeholder="Введите слово...">
+                    <button class="input-btn" onclick="app.checkWordInput()">Проверить</button>
+                </div>
+                <div class="counter" id="progress-counter">Разблокировано: 0 из 0 слов</div>
+            </div>
+            <div id="unlocked-words-section" style="display: none;" class="unlocked-words">
+                <h4>Разблокированные слова:</h4>
+                <div id="unlocked-words"></div>
+            </div>
+            <div id="answer-section" style="display: none;">
+                <div class="selected-words" id="selected-words">Выберите слова в правильном порядке...</div>
+                <div id="word-buttons" style="text-align: center; margin: 20px 0;"></div>
+                <div class="action-buttons">
+                    <button class="btn" onclick="app.checkAnswer()">✅ Проверить ответ</button>
+                    <button class="btn btn-remove" onclick="app.removeLastWord()">🗑️ Убрать слово</button>
+                    <button class="btn btn-back" onclick="app.resetAnswer()">🔄 Сбросить</button>
+                </div>
+            </div>
+            <div class="navigation-buttons">
+                <button class="btn btn-nav" id="prev-exercise-btn" onclick="app.navigateToPrevExercise()">◀ Предыдущее</button>
+                <button class="btn btn-nav" id="next-exercise-btn" onclick="app.navigateToNextExercise()">Следующее ▶</button>
+            </div>
+            <button class="btn btn-back" onclick="app.backToExercises()">← Назад к упражнениям</button>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
