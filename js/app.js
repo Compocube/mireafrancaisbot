@@ -360,32 +360,54 @@ const app = {
     async loadExerciseDescription(hasProgress = false) {
         try {
             const fileName = this.getExerciseFileName();
-            const response = await fetch(`https://mireafrancaisbot.ru/api/exercise/${this.currentSemester}/${fileName}.txt`);
-
-            if (!response.ok) throw new Error(`Ошибка загрузки: ${response.status}`);
-
+            
+            // Добавляем обработку CORS и проверку существования файлов
+            const apiUrl = `https://mireafrancaisbot.ru/api/exercise/${this.currentSemester}/${fileName}.txt`;
+            
+            console.log('Загрузка упражнения:', apiUrl); // Для отладки
+            
+            // Пробуем загрузить с режимом CORS
+            const response = await fetch(apiUrl, {
+                mode: 'cors',
+                headers: {
+                    'Accept': 'text/plain',
+                    'Origin': window.location.origin
+                }
+            });
+    
+            if (!response.ok) {
+                throw new Error(`Ошибка загрузки: ${response.status}`);
+            }
+    
             let description = await response.text();
             description = this.makeLinksClickable(description);
-
+    
             document.getElementById('exercise-description').innerHTML =
                 `<div class="exercise-container">${description.replace(/\n/g, '<br>')}</div>`;
-
+    
+            // Аналогично для файла с ответами
             try {
-                const answerFileName = this.getExerciseFileName();
-                const answerResponse = await fetch(`https://mireafrancaisbot.ru/api/exercise/${this.currentSemester}/${answerFileName}A.txt`);
+                const answerResponse = await fetch(`https://mireafrancaisbot.ru/api/exercise/${this.currentSemester}/${fileName}A.txt`, {
+                    mode: 'cors',
+                    headers: {
+                        'Accept': 'text/plain',
+                        'Origin': window.location.origin
+                    }
+                });
+                
                 if (answerResponse.ok) {
                     let answers = await answerResponse.text();
                     this.correctOrder = answers.split(',').map(word => word.trim()).filter(word => word.length > 0);
-
+    
                     if (!hasProgress) {
                         const wordsForDisplay = this.getUniqueWordsForDisplay(this.correctOrder);
                         this.allWords = [...wordsForDisplay];
                     }
-
+    
                     if (this.correctOrder.length > 0) {
                         this.isCustomExercise = this.checkIfCustomExercise();
                         this.isInputExercise = this.checkIfInputExercise();
-
+    
                         if (this.isInputExercise) {
                             this.setupInputExercise(hasProgress);
                         } else if (this.isCustomExercise) {
@@ -398,14 +420,17 @@ const app = {
                     }
                 }
             } catch (answerError) {
-                console.log('Файл с ответами не найден, это упражнение без проверки');
+                console.log('Файл с ответами не найден или CORS ошибка:', answerError);
+                // Показываем сообщение пользователю
+                document.getElementById('exercise-description').innerHTML += 
+                    `<div class="info-message">ℹ️ Это упражнение без автоматической проверки</div>`;
             }
         } catch (error) {
             console.error('Ошибка загрузки упражнения:', error);
             document.getElementById('exercise-description').innerHTML =
-                `<div class="error">Ошибка загрузки упражнения: ${error.message}</div>`;
+                `<div class="error">⚠️ Ошибка загрузки упражнения. Проверьте подключение к интернету.<br>${error.message}</div>`;
         }
-    },
+    }
 
     checkIfCustomExercise() {
         const exerciseKey = `${this.currentSemester}.${this.currentModule}.${this.currentExercise}`;
