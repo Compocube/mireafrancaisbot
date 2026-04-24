@@ -17,6 +17,8 @@ const app = {
         'Sem4.6.3': { parts: 5, hasAnswerFiles: true },
         'Sem4.7.3': { parts: 4, hasAnswerFiles: true }
     },
+    // Сохраняем предыдущий экран для возврата из справки
+    previousScreenInfo: null,
 
     loadProgress() {
         try {
@@ -238,8 +240,9 @@ const app = {
 
     showSemester(semester) {
         this.currentSemester = semester;
-        document.getElementById('main-menu').style.display = 'none';
+        document.getElementById('main-menu').style.display = 'block';
         document.getElementById('module-menu').style.display = 'block';
+        document.getElementById('main-menu').style.display = 'none';
         document.getElementById('semester-title').textContent = `${semester} - Изучение французского`;
 
         const modulesContainer = document.getElementById('module-buttons');
@@ -361,12 +364,10 @@ const app = {
         try {
             const fileName = this.getExerciseFileName();
             
-            // Добавляем обработку CORS и проверку существования файлов
             const apiUrl = `https://mireafrancaisbot.ru/api/exercise/${this.currentSemester}/${fileName}.txt`;
             
-            console.log('Загрузка упражнения:', apiUrl); // Для отладки
+            console.log('Загрузка упражнения:', apiUrl);
             
-            // Пробуем загрузить с режимом CORS
             const response = await fetch(apiUrl, {
                 mode: 'cors',
                 headers: {
@@ -385,7 +386,6 @@ const app = {
             document.getElementById('exercise-description').innerHTML =
                 `<div class="exercise-container">${description.replace(/\n/g, '<br>')}</div>`;
     
-            // Аналогично для файла с ответами
             try {
                 const answerResponse = await fetch(`https://mireafrancaisbot.ru/api/exercise/${this.currentSemester}/${fileName}A.txt`, {
                     mode: 'cors',
@@ -421,7 +421,6 @@ const app = {
                 }
             } catch (answerError) {
                 console.log('Файл с ответами не найден или CORS ошибка:', answerError);
-                // Показываем сообщение пользователю
                 document.getElementById('exercise-description').innerHTML += 
                     `<div class="info-message">ℹ️ Это упражнение без автоматической проверки</div>`;
             }
@@ -430,7 +429,7 @@ const app = {
             document.getElementById('exercise-description').innerHTML =
                 `<div class="error">⚠️ Ошибка загрузки упражнения. Проверьте подключение к интернету.<br>${error.message}</div>`;
         }
-    }
+    },
 
     checkIfCustomExercise() {
         const exerciseKey = `${this.currentSemester}.${this.currentModule}.${this.currentExercise}`;
@@ -835,6 +834,123 @@ const app = {
             }
             exercisesContainer.appendChild(btn);
         }
+    },
+
+    // ========== Функции справки ==========
+    
+    // Открытие окна справки
+    openHelp() {
+        // Сохраняем информацию о текущем экране
+        this.previousScreenInfo = {
+            mainMenuVisible: document.getElementById('main-menu').style.display !== 'none',
+            moduleMenuVisible: document.getElementById('module-menu').style.display !== 'none',
+            exerciseMenuVisible: document.getElementById('exercise-menu').style.display !== 'none',
+            exerciseContentVisible: document.getElementById('exercise-content').style.display !== 'none'
+        };
+        
+        // Скрываем все основные окна
+        document.getElementById('main-menu').style.display = 'none';
+        document.getElementById('module-menu').style.display = 'none';
+        document.getElementById('exercise-menu').style.display = 'none';
+        document.getElementById('exercise-content').style.display = 'none';
+        
+        // Показываем окно справки
+        const helpWindow = document.getElementById('help-window');
+        helpWindow.style.display = 'flex';
+        
+        // Загружаем содержимое Spr.txt
+        this.loadHelpContent();
+    },
+    
+    // Загрузка содержимого справки
+    async loadHelpContent() {
+        const helpContent = document.getElementById('help-content');
+        helpContent.className = 'help-content loading';
+        helpContent.innerHTML = 'Загрузка справки...';
+        
+        // Пробуем загрузить Spr.txt с разных возможных путей
+        const possibleUrls = [
+            'Spr.txt',
+            './Spr.txt',
+            '/Spr.txt',
+            'https://mireafrancaisbot.ru/Spr.txt'
+        ];
+        
+        let contentLoaded = false;
+        
+        for (const url of possibleUrls) {
+            try {
+                console.log('Попытка загрузки справки по URL:', url);
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'text/plain',
+                        'Cache': 'no-cache'
+                    }
+                });
+                
+                if (response.ok) {
+                    const content = await response.text();
+                    helpContent.className = 'help-content';
+                    // Сохраняем форматирование с пробелами и переносами строк
+                    helpContent.innerHTML = this.formatHelpText(content);
+                    contentLoaded = true;
+                    console.log('Справка успешно загружена из:', url);
+                    break;
+                }
+            } catch (error) {
+                console.log(`Не удалось загрузить справку из ${url}:`, error);
+            }
+        }
+        
+        if (!contentLoaded) {
+            helpContent.className = 'help-content error';
+            helpContent.innerHTML = `
+                <div style="text-align: center;">
+                    <p>⚠️ Не удалось загрузить файл справки (Spr.txt)</p>
+                    <p style="font-size: 14px; margin-top: 10px;">Проверьте наличие файла в корневой директории.</p>
+                    <p style="font-size: 12px; margin-top: 5px; color: #666;">Попробуйте обновить страницу или обратитесь к администратору.</p>
+                </div>
+            `;
+        }
+    },
+    
+    // Форматирование текста справки
+    formatHelpText(text) {
+        // Заменяем переносы строк на <br> для отображения
+        let formatted = text.replace(/\n/g, '<br>');
+        // Делаем ссылки кликабельными
+        formatted = this.makeLinksClickable(formatted);
+        return formatted;
+    },
+    
+    // Закрытие окна справки и возврат на предыдущий экран
+    closeHelp() {
+        const helpWindow = document.getElementById('help-window');
+        helpWindow.style.display = 'none';
+        
+        // Восстанавливаем предыдущий экран
+        if (this.previousScreenInfo) {
+            if (this.previousScreenInfo.mainMenuVisible) {
+                document.getElementById('main-menu').style.display = 'block';
+            }
+            if (this.previousScreenInfo.moduleMenuVisible) {
+                document.getElementById('module-menu').style.display = 'block';
+            }
+            if (this.previousScreenInfo.exerciseMenuVisible) {
+                document.getElementById('exercise-menu').style.display = 'block';
+            }
+            if (this.previousScreenInfo.exerciseContentVisible) {
+                document.getElementById('exercise-content').style.display = 'block';
+            }
+            this.previousScreenInfo = null;
+        } else {
+            // Если по какой-то причине нет сохраненной информации, показываем главное меню
+            document.getElementById('main-menu').style.display = 'block';
+        }
+        
+        // Очищаем содержимое справки для следующего открытия
+        document.getElementById('help-content').innerHTML = '';
     }
 };
 
