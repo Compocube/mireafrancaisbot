@@ -9,9 +9,11 @@
 </head>
 <body>
     <div class="container">
-        <!-- Верхняя панель с кнопкой справки -->
+        <!-- Верхняя панель с кнопками -->
         <div class="top-bar">
             <div class="top-bar-spacer"></div>
+            <button class="stats-btn" onclick="app.showStats()">📊 Статистика</button>
+            <button class="translate-btn" onclick="app.showTranslator()">🌐 Переводчик</button>
             <button class="help-btn" onclick="app.openHelp()">❓ Справка</button>
         </div>
 
@@ -84,6 +86,37 @@
                 <h3>Справка</h3>
             </div>
             <div id="help-content" class="help-content loading">Загрузка справки...</div>
+        </div>
+
+        <!-- Окно статистики -->
+        <div id="stats-window" style="display: none;">
+            <div class="stats-header">
+                <button class="stats-back-btn" onclick="app.closeStats()">← Назад</button>
+                <h3>Статистика</h3>
+                <div class="stats-tabs">
+                    <button class="stats-tab personal active" onclick="app.showPersonalStats()">Личная</button>
+                    <button class="stats-tab global" onclick="app.showGlobalStats()">Глобальная</button>
+                </div>
+            </div>
+            <div id="stats-content" class="stats-content"></div>
+        </div>
+
+        <!-- Окно переводчика -->
+        <div id="translate-window" style="display: none;">
+            <div class="translate-header">
+                <button class="translate-back-btn" onclick="app.closeTranslator()">← Назад</button>
+                <h3>Переводчик</h3>
+            </div>
+            <div class="translate-container">
+                <div class="translate-input-area">
+                    <textarea id="translate-input" class="translate-textarea" placeholder="Введите текст на французском языке..."></textarea>
+                    <button class="translate-btn-action" onclick="app.translateText()">Перевести на русский</button>
+                </div>
+                <div class="translate-output-area">
+                    <h4>Результат перевода:</h4>
+                    <div id="translate-result"></div>
+                </div>
+            </div>
         </div>
     </div>
 
