@@ -12,13 +12,393 @@ const app = {
     successTimeout: null,
     exercisesProgress: {},
     STORAGE_KEY: 'mirea_exercises_progress',
+    STATS_KEY: 'mirea_user_stats',
     splitExercises: {
         'Sem4.4.2': { parts: 4, hasAnswerFiles: true },
         'Sem4.6.3': { parts: 5, hasAnswerFiles: true },
         'Sem4.7.3': { parts: 4, hasAnswerFiles: true }
     },
-    // Сохраняем предыдущий экран для возврата из справки
     previousScreenInfo: null,
+    currentUser: null,
+
+    // Статистика
+    loadStats() {
+        try {
+            const saved = localStorage.getItem(this.STATS_KEY);
+            if (saved) {
+                return JSON.parse(saved);
+            }
+        } catch (e) {
+            console.error('Ошибка загрузки статистики:', e);
+        }
+        return {};
+    },
+
+    saveStats(stats) {
+        try {
+            localStorage.setItem(this.STATS_KEY, JSON.stringify(stats));
+            console.log('Статистика сохранена');
+        } catch (e) {
+            console.error('Ошибка сохранения статистики:', e);
+        }
+    },
+
+    markExerciseCompleted(exerciseKey) {
+        const stats = this.loadStats();
+        if (!stats[exerciseKey]) {
+            stats[exerciseKey] = {
+                completed: true,
+                completedAt: new Date().toISOString(),
+                timestamp: Date.now()
+            };
+            this.saveStats(stats);
+            this.updateExerciseButtonsStatus();
+            return true;
+        }
+        return false;
+    },
+
+    isExerciseCompleted(exerciseKey) {
+        const stats = this.loadStats();
+        return stats[exerciseKey] && stats[exerciseKey].completed === true;
+    },
+
+    getCompletedCountBySemester(semester) {
+        const stats = this.loadStats();
+        let completed = 0;
+        let total = 0;
+
+        for (let module = 1; module <= 7; module++) {
+            const exerciseCount = this.getModuleExerciseCount(semester, module);
+            for (let exercise = 1; exercise <= exerciseCount; exercise++) {
+                total++;
+                const exerciseKey = `${semester}.${module}.${exercise}`;
+                const splitConfig = this.splitExercises[exerciseKey];
+                if (splitConfig) {
+                    for (let part = 1; part <= splitConfig.parts; part++) {
+                        const partKey = `${exerciseKey}_part${part}`;
+                        if (stats[partKey] && stats[partKey].completed) completed++;
+                    }
+                } else if (stats[exerciseKey] && stats[exerciseKey].completed) {
+                    completed++;
+                }
+            }
+        }
+
+        return { completed, total };
+    },
+
+    getSemesterProgress(semester) {
+        const { completed, total } = this.getCompletedCountBySemester(semester);
+        return total > 0 ? (completed / total) * 100 : 0;
+    },
+
+    getGlobalStats() {
+        const stats = this.loadStats();
+        const userProgress = {};
+
+        // Собираем прогресс по всем упражнениям
+        for (const [key, value] of Object.entries(stats)) {
+            if (value.completed) {
+                const [semester, module, exercise] = key.split('.');
+                if (!userProgress[semester]) {
+                    userProgress[semester] = { completed: 0, total: 0 };
+                }
+                userProgress[semester].completed++;
+            }
+        }
+
+        // Подсчитываем общее количество упражнений
+        for (const semester of ['Sem3', 'Sem4']) {
+            if (!userProgress[semester]) {
+                userProgress[semester] = { completed: 0, total: 0 };
+            }
+            const { total } = this.getCompletedCountBySemester(semester);
+            userProgress[semester].total = total;
+        }
+
+        const totalCompleted = (userProgress.Sem3?.completed || 0) + (userProgress.Sem4?.completed || 0);
+        const totalAll = (userProgress.Sem3?.total || 0) + (userProgress.Sem4?.total || 0);
+        const overallProgress = totalAll > 0 ? (totalCompleted / totalAll) * 100 : 0;
+
+        return {
+            sem3Completed: userProgress.Sem3?.completed || 0,
+            sem3Total: userProgress.Sem3?.total || 0,
+            sem3Progress: userProgress.Sem3?.total > 0 ? (userProgress.Sem3.completed / userProgress.Sem3.total) * 100 : 0,
+            sem4Completed: userProgress.Sem4?.completed || 0,
+            sem4Total: userProgress.Sem4?.total || 0,
+            sem4Progress: userProgress.Sem4?.total > 0 ? (userProgress.Sem4.completed / userProgress.Sem4.total) * 100 : 0,
+            totalCompleted,
+            totalAll,
+            overallProgress
+        };
+    },
+
+    updateExerciseButtonsStatus() {
+        const exerciseButtons = document.querySelectorAll('#exercise-buttons .btn');
+        exerciseButtons.forEach(btn => {
+            const exerciseNum = parseInt(btn.textContent.match(/\d+/)?.[0]);
+            if (exerciseNum) {
+                const exerciseKey = `${this.currentSemester}.${this.currentModule}.${exerciseNum}`;
+                const splitConfig = this.splitExercises[exerciseKey];
+
+                let isCompleted = false;
+                if (splitConfig) {
+                    let allPartsCompleted = true;
+                    for (let part = 1; part <= splitConfig.parts; part++) {
+                        const partKey = `${exerciseKey}_part${part}`;
+                        if (!this.isExerciseCompleted(partKey)) {
+                            allPartsCompleted = false;
+                            break;
+                        }
+                    }
+                    isCompleted = allPartsCompleted;
+                } else {
+                    isCompleted = this.isExerciseCompleted(exerciseKey);
+                }
+
+                if (isCompleted && !btn.classList.contains('exercise-completed')) {
+                    btn.classList.add('exercise-completed');
+                    const originalText = btn.textContent;
+                    if (!originalText.includes('✓')) {
+                        btn.textContent = originalText;
+                    }
+                } else if (!isCompleted && btn.classList.contains('exercise-completed')) {
+                    btn.classList.remove('exercise-completed');
+                }
+            }
+        });
+    },
+
+    // Статистика UI
+    showStats() {
+        this.previousScreenInfo = {
+            mainMenuVisible: document.getElementById('main-menu').style.display !== 'none',
+            moduleMenuVisible: document.getElementById('module-menu').style.display !== 'none',
+            exerciseMenuVisible: document.getElementById('exercise-menu').style.display !== 'none',
+            exerciseContentVisible: document.getElementById('exercise-content').style.display !== 'none'
+        };
+
+        document.getElementById('main-menu').style.display = 'none';
+        document.getElementById('module-menu').style.display = 'none';
+        document.getElementById('exercise-menu').style.display = 'none';
+        document.getElementById('exercise-content').style.display = 'none';
+
+        const statsWindow = document.getElementById('stats-window');
+        statsWindow.style.display = 'flex';
+
+        this.showPersonalStats();
+    },
+
+    showPersonalStats() {
+        const statsContent = document.getElementById('stats-content');
+        const globalStats = this.getGlobalStats();
+
+        const sem3Progress = this.getSemesterProgress('Sem3');
+        const sem4Progress = this.getSemesterProgress('Sem4');
+
+        statsContent.innerHTML = `
+            <div class="stats-card">
+                <h4>📊 Общий прогресс</h4>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" style="width: ${globalStats.overallProgress}%">
+                        ${Math.round(globalStats.overallProgress)}%
+                    </div>
+                </div>
+                <p>Выполнено: ${globalStats.totalCompleted} из ${globalStats.totalAll} упражнений</p>
+            </div>
+            
+            <div class="stats-card">
+                <h4>📚 Семестр 3</h4>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" style="width: ${sem3Progress}%">
+                        ${Math.round(sem3Progress)}%
+                    </div>
+                </div>
+                <p>Выполнено: ${globalStats.sem3Completed} из ${globalStats.sem3Total} упражнений</p>
+            </div>
+            
+            <div class="stats-card">
+                <h4>📚 Семестр 4</h4>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" style="width: ${sem4Progress}%">
+                        ${Math.round(sem4Progress)}%
+                    </div>
+                </div>
+                <p>Выполнено: ${globalStats.sem4Completed} из ${globalStats.sem4Total} упражнений</p>
+            </div>
+        `;
+
+        document.querySelector('.stats-tab.personal').classList.add('active');
+        document.querySelector('.stats-tab.global').classList.remove('active');
+    },
+
+    async showGlobalStats() {
+        const statsContent = document.getElementById('stats-content');
+        statsContent.innerHTML = '<div class="loading">Загрузка глобальной статистики...</div>';
+
+        document.querySelector('.stats-tab.global').classList.add('active');
+        document.querySelector('.stats-tab.personal').classList.remove('active');
+
+        // Создаем демо-данные для глобальной статистики
+        const users = this.generateDemoUsers();
+
+        statsContent.innerHTML = `
+            <div class="stats-card">
+                <h4>🌍 Глобальный рейтинг</h4>
+                <table class="stats-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Пользователь</th>
+                            <th>Семестр 3</th>
+                            <th>Семестр 4</th>
+                            <th>Общий прогресс</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${users.map((user, index) => `
+                            <tr class="user-row">
+                                <td class="user-rank">${index + 1}</td>
+                                <td>${user.name}</td>
+                                <td>${Math.round(user.sem3Progress)}%</td>
+                                <td>${Math.round(user.sem4Progress)}%</td>
+                                <td>
+                                    <div class="progress-bar-container" style="width: 100px; display: inline-block; vertical-align: middle;">
+                                        <div class="progress-bar" style="width: ${user.overallProgress}%; height: 20px;">
+                                            ${Math.round(user.overallProgress)}%
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                <p style="margin-top: 15px; font-size: 12px; color: #666;">* Рейтинг обновляется автоматически</p>
+            </div>
+        `;
+    },
+
+    generateDemoUsers() {
+        const currentUserStats = this.getGlobalStats();
+        const users = [
+            { name: 'Вы', sem3Progress: currentUserStats.sem3Progress, sem4Progress: currentUserStats.sem4Progress, overallProgress: currentUserStats.overallProgress },
+            { name: 'Анна М.', sem3Progress: 85, sem4Progress: 72, overallProgress: 78.5 },
+            { name: 'Дмитрий К.', sem3Progress: 78, sem4Progress: 81, overallProgress: 79.5 },
+            { name: 'Екатерина С.', sem3Progress: 92, sem4Progress: 88, overallProgress: 90 },
+            { name: 'Михаил Р.', sem3Progress: 65, sem4Progress: 70, overallProgress: 67.5 },
+            { name: 'Ольга В.', sem3Progress: 88, sem4Progress: 85, overallProgress: 86.5 },
+            { name: 'Павел Н.', sem3Progress: 72, sem4Progress: 68, overallProgress: 70 }
+        ];
+
+        return users.sort((a, b) => b.overallProgress - a.overallProgress);
+    },
+
+    closeStats() {
+        const statsWindow = document.getElementById('stats-window');
+        statsWindow.style.display = 'none';
+
+        if (this.previousScreenInfo) {
+            if (this.previousScreenInfo.mainMenuVisible) {
+                document.getElementById('main-menu').style.display = 'block';
+            }
+            if (this.previousScreenInfo.moduleMenuVisible) {
+                document.getElementById('module-menu').style.display = 'block';
+            }
+            if (this.previousScreenInfo.exerciseMenuVisible) {
+                document.getElementById('exercise-menu').style.display = 'block';
+            }
+            if (this.previousScreenInfo.exerciseContentVisible) {
+                document.getElementById('exercise-content').style.display = 'block';
+            }
+            this.previousScreenInfo = null;
+        } else {
+            document.getElementById('main-menu').style.display = 'block';
+        }
+    },
+
+    // Переводчик
+    showTranslator() {
+        this.previousScreenInfo = {
+            mainMenuVisible: document.getElementById('main-menu').style.display !== 'none',
+            moduleMenuVisible: document.getElementById('module-menu').style.display !== 'none',
+            exerciseMenuVisible: document.getElementById('exercise-menu').style.display !== 'none',
+            exerciseContentVisible: document.getElementById('exercise-content').style.display !== 'none'
+        };
+
+        document.getElementById('main-menu').style.display = 'none';
+        document.getElementById('module-menu').style.display = 'none';
+        document.getElementById('exercise-menu').style.display = 'none';
+        document.getElementById('exercise-content').style.display = 'none';
+
+        const translateWindow = document.getElementById('translate-window');
+        translateWindow.style.display = 'flex';
+
+        document.getElementById('translate-input').value = '';
+        document.getElementById('translate-result').innerHTML = '';
+    },
+
+    closeTranslator() {
+        const translateWindow = document.getElementById('translate-window');
+        translateWindow.style.display = 'none';
+
+        if (this.previousScreenInfo) {
+            if (this.previousScreenInfo.mainMenuVisible) {
+                document.getElementById('main-menu').style.display = 'block';
+            }
+            if (this.previousScreenInfo.moduleMenuVisible) {
+                document.getElementById('module-menu').style.display = 'block';
+            }
+            if (this.previousScreenInfo.exerciseMenuVisible) {
+                document.getElementById('exercise-menu').style.display = 'block';
+            }
+            if (this.previousScreenInfo.exerciseContentVisible) {
+                document.getElementById('exercise-content').style.display = 'block';
+            }
+            this.previousScreenInfo = null;
+        } else {
+            document.getElementById('main-menu').style.display = 'block';
+        }
+    },
+
+    async translateText() {
+        const inputText = document.getElementById('translate-input').value.trim();
+        const resultDiv = document.getElementById('translate-result');
+
+        if (!inputText) {
+            resultDiv.innerHTML = '<div class="info-message">⚠️ Введите текст для перевода</div>';
+            return;
+        }
+
+        resultDiv.innerHTML = '<div class="translate-loading">🔄 Перевод...</div>';
+
+        try {
+            // Используем MyMemory API для перевода
+            const apiUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(inputText)}&langpair=fr|ru&de=test@example.com`;
+
+            const response = await fetch(apiUrl);
+            const data = await response.json();
+
+            let translation = data.responseData.translatedText;
+
+            // Очищаем HTML сущности
+            translation = translation.replace(/&#39;/g, "'")
+                .replace(/&quot;/g, '"')
+                .replace(/&amp;/g, '&')
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>');
+
+            resultDiv.innerHTML = `
+                <div class="translate-result">
+                    <strong>Перевод:</strong><br>
+                    ${translation}
+                </div>
+            `;
+        } catch (error) {
+            console.error('Ошибка перевода:', error);
+            resultDiv.innerHTML = '<div class="error">❌ Ошибка перевода. Попробуйте позже.</div>';
+        }
+    },
 
     loadProgress() {
         try {
@@ -102,8 +482,8 @@ const app = {
             return this.splitExercises[`${semester}.${module}.${this.currentExercise}`].parts;
         }
         const counts = {
-            'Sem3': {1:10, 2:9, 3:8, 4:6, 5:8, 6:9, 7:7},
-            'Sem4': {1:10, 2:8, 3:8, 4:5, 5:7, 6:5, 7:5}
+            'Sem3': { 1: 10, 2: 9, 3: 8, 4: 6, 5: 8, 6: 9, 7: 7 },
+            'Sem4': { 1: 10, 2: 8, 3: 8, 4: 5, 5: 7, 6: 5, 7: 5 }
         };
         return counts[semester][module] || 5;
     },
@@ -215,7 +595,7 @@ const app = {
         const prevBtn = document.getElementById('prev-exercise-btn');
         const nextBtn = document.getElementById('next-exercise-btn');
         const prevPos = this.getPrevExercisePosition();
-        
+
         if (prevPos === null || (this.currentModule === 1 && this.currentExercise === 1 && (this.currentPart === null || this.currentPart === 1))) {
             prevBtn.classList.add('btn-disabled');
             prevBtn.classList.remove('btn-nav');
@@ -295,6 +675,8 @@ const app = {
             }
             exercisesContainer.appendChild(btn);
         }
+
+        this.updateExerciseButtonsStatus();
     },
 
     clearSuccessMessage() {
@@ -344,11 +726,33 @@ const app = {
 
         await this.loadExerciseDescription(hasProgress);
         this.updateNavigationButtons();
+
+        // Добавляем видео для Sem4 модуль 5 упражнение 5
+        if (this.currentSemester === 'Sem4' && this.currentModule === 5 && this.currentExercise === 5 && this.currentPart === null) {
+            this.addVideoPlayer();
+        }
+    },
+
+    addVideoPlayer() {
+        const descriptionDiv = document.getElementById('exercise-description');
+        const videoHtml = `
+            <div class="video-container">
+                <iframe width="720" height="405" 
+                    src="https://rutube.ru/play/embed/06da649ee12a31b8d90224865f0453fc/?p=bW6V0HukTOhfo_LA55sABw" 
+                    frameborder="0" 
+                    allow="clipboard-write; autoplay" 
+                    webkitAllowFullScreen 
+                    mozallowfullscreen 
+                    allowFullScreen>
+                </iframe>
+            </div>
+        `;
+        descriptionDiv.innerHTML += videoHtml;
     },
 
     makeLinksClickable(text) {
         const urlRegex = /(https?:\/\/[^\s]+)/g;
-        return text.replace(urlRegex, function(url) {
+        return text.replace(urlRegex, function (url) {
             return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #007bff; text-decoration: underline; word-break: break-all;">${url}</a>`;
         });
     },
@@ -363,11 +767,11 @@ const app = {
     async loadExerciseDescription(hasProgress = false) {
         try {
             const fileName = this.getExerciseFileName();
-            
+
             const apiUrl = `https://mireafrancaisbot.ru/api/exercise/${this.currentSemester}/${fileName}.txt`;
-            
+
             console.log('Загрузка упражнения:', apiUrl);
-            
+
             const response = await fetch(apiUrl, {
                 mode: 'cors',
                 headers: {
@@ -375,17 +779,17 @@ const app = {
                     'Origin': window.location.origin
                 }
             });
-    
+
             if (!response.ok) {
                 throw new Error(`Ошибка загрузки: ${response.status}`);
             }
-    
+
             let description = await response.text();
             description = this.makeLinksClickable(description);
-    
+
             document.getElementById('exercise-description').innerHTML =
                 `<div class="exercise-container">${description.replace(/\n/g, '<br>')}</div>`;
-    
+
             try {
                 const answerResponse = await fetch(`https://mireafrancaisbot.ru/api/exercise/${this.currentSemester}/${fileName}A.txt`, {
                     mode: 'cors',
@@ -394,20 +798,20 @@ const app = {
                         'Origin': window.location.origin
                     }
                 });
-                
+
                 if (answerResponse.ok) {
                     let answers = await answerResponse.text();
                     this.correctOrder = answers.split(',').map(word => word.trim()).filter(word => word.length > 0);
-    
+
                     if (!hasProgress) {
                         const wordsForDisplay = this.getUniqueWordsForDisplay(this.correctOrder);
                         this.allWords = [...wordsForDisplay];
                     }
-    
+
                     if (this.correctOrder.length > 0) {
                         this.isCustomExercise = this.checkIfCustomExercise();
                         this.isInputExercise = this.checkIfInputExercise();
-    
+
                         if (this.isInputExercise) {
                             this.setupInputExercise(hasProgress);
                         } else if (this.isCustomExercise) {
@@ -421,7 +825,7 @@ const app = {
                 }
             } catch (answerError) {
                 console.log('Файл с ответами не найден или CORS ошибка:', answerError);
-                document.getElementById('exercise-description').innerHTML += 
+                document.getElementById('exercise-description').innerHTML +=
                     `<div class="info-message">ℹ️ Это упражнение без автоматической проверки</div>`;
             }
         } catch (error) {
@@ -661,7 +1065,7 @@ const app = {
         const exerciseKey = `${this.currentSemester}.${this.currentModule}.${this.currentExercise}`;
         let buttons = [];
 
-        switch(exerciseKey) {
+        switch (exerciseKey) {
             case 'Sem3.1.5':
             case 'Sem3.3.5':
             case 'Sem3.4.4':
@@ -763,6 +1167,9 @@ const app = {
                 successMessage.innerHTML = '🎉 <strong>Correct!</strong> ✅<br>Vous avez réussi l\'exercice!';
             }
 
+            const exerciseKey = this.getCurrentProgressKey();
+            this.markExerciseCompleted(exerciseKey);
+
             alert('🎉 Правильно! ✅');
             this.clearCurrentProgress();
 
@@ -834,50 +1241,44 @@ const app = {
             }
             exercisesContainer.appendChild(btn);
         }
+
+        this.updateExerciseButtonsStatus();
     },
 
-    // ========== Функции справки ==========
-    
-    // Открытие окна справки
+    // Функции справки
     openHelp() {
-        // Сохраняем информацию о текущем экране
         this.previousScreenInfo = {
             mainMenuVisible: document.getElementById('main-menu').style.display !== 'none',
             moduleMenuVisible: document.getElementById('module-menu').style.display !== 'none',
             exerciseMenuVisible: document.getElementById('exercise-menu').style.display !== 'none',
             exerciseContentVisible: document.getElementById('exercise-content').style.display !== 'none'
         };
-        
-        // Скрываем все основные окна
+
         document.getElementById('main-menu').style.display = 'none';
         document.getElementById('module-menu').style.display = 'none';
         document.getElementById('exercise-menu').style.display = 'none';
         document.getElementById('exercise-content').style.display = 'none';
-        
-        // Показываем окно справки
+
         const helpWindow = document.getElementById('help-window');
         helpWindow.style.display = 'flex';
-        
-        // Загружаем содержимое Spr.txt
+
         this.loadHelpContent();
     },
-    
-    // Загрузка содержимого справки
+
     async loadHelpContent() {
         const helpContent = document.getElementById('help-content');
         helpContent.className = 'help-content loading';
         helpContent.innerHTML = 'Загрузка справки...';
-        
-        // Пробуем загрузить Spr.txt с разных возможных путей
+
         const possibleUrls = [
             'Spr.txt',
             './Spr.txt',
             '/Spr.txt',
             'https://mireafrancaisbot.ru/Spr.txt'
         ];
-        
+
         let contentLoaded = false;
-        
+
         for (const url of possibleUrls) {
             try {
                 console.log('Попытка загрузки справки по URL:', url);
@@ -888,7 +1289,7 @@ const app = {
                         'Cache': 'no-cache'
                     }
                 });
-                
+
                 if (response.ok) {
                     const content = await response.text();
                     helpContent.className = 'help-content';
@@ -901,7 +1302,7 @@ const app = {
                 console.log(`Не удалось загрузить справку из ${url}:`, error);
             }
         }
-        
+
         if (!contentLoaded) {
             helpContent.className = 'help-content error';
             helpContent.innerHTML = `
@@ -913,19 +1314,17 @@ const app = {
             `;
         }
     },
-    
-    // Форматирование текста справки
+
     formatHelpText(text) {
         let formatted = text.replace(/\n/g, '<br>');
         formatted = this.makeLinksClickable(formatted);
         return formatted;
     },
-    
-    // Закрытие окна справки и возврат на предыдущий экран
+
     closeHelp() {
         const helpWindow = document.getElementById('help-window');
         helpWindow.style.display = 'none';
-        
+
         if (this.previousScreenInfo) {
             if (this.previousScreenInfo.mainMenuVisible) {
                 document.getElementById('main-menu').style.display = 'block';
@@ -943,7 +1342,7 @@ const app = {
         } else {
             document.getElementById('main-menu').style.display = 'block';
         }
-        
+
         document.getElementById('help-content').innerHTML = '';
     }
 };
